@@ -1,0 +1,40 @@
+---
+title: "FP"
+author: "Leo Li"
+date: "2023-09-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
+
+```
+
+## Pie Chart
+
+```{r}
+causes <- table(data$CONTRIBUTING.FACTOR.VEHICLE.1)
+causes <- causes[!names(causes) == ""]
+par(mar = c(1, 1, 1, 1))
+pie(causes, labels = names(causes), main = "Contributing Factors", cex = 0.3)
+```
+
+## Histogram
+
+```{r}
+bor <- table(data$BOROUGH)
+bor <- bor[!names(bor) == ""]
+
+barplot(bor, 
+        names.arg = names(bor),
+        cex.names = 0.8,
+        main = "ACCIDENT BOROUGH",
+        xlab = "Borough",
+        ylab = "Frequency"
+)
+
+```
