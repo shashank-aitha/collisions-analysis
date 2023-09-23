@@ -1,0 +1,100 @@
+---
+title: "FP"
+author: "Leo Li"
+date: "2023-09-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
+
+```
+
+## Pie Chart
+
+Demonstrate the proportions of contributing factors to collisions.
+
+```{r}
+causes <- table(data$CONTRIBUTING.FACTOR.VEHICLE.1)
+causes <- causes[!names(causes) == ""]
+
+par(mar = c(1, 1, 1, 1))
+pie(causes, labels = names(causes), main = "Contributing Factors", cex = 0.3)
+```
+
+## Histogram
+
+Demonstrate the number of collisions happened on different boroughs.
+
+```{r}
+bor <- table(data$BOROUGH)
+bor <- bor[!names(bor) == ""]
+
+barplot(bor, 
+        names.arg = names(bor),
+        cex.names = 0.8,
+        main = "ACCIDENT BOROUGH",
+        xlab = "Borough",
+        ylab = "Frequency",
+        col = "lightblue"
+)
+
+```
+
+## Line Chart
+
+Demonstrate the trend of number of collisions happened in each month.
+
+```{r}
+data$CRASH.DATE <- as.Date(data$CRASH.DATE, format="%m/%d/%Y")
+month <- format(data$CRASH.DATE, "%Y-%m")
+month_counts <- table(month)
+month_counts_df <- data.frame(Month = names(month_counts), Count = as.numeric(month_counts))
+month_counts_df <- month_counts_df[order(month_counts_df$Month), ]
+
+plot(seq(length(month_counts_df$Month)), month_counts_df$Count, type = "l", xlab = "Month",
+     ylab = "Number of Occurrences", main = "Number of Occurrences of Motor Vehicle Collisions by Month",
+     xaxt = "n")
+axis(1, at = seq(length(month_counts_df$Month)), labels = month_counts_df$Month, las = 2, cex.axis = 0.7)
+```
+
+## Scatter Plot
+
+Demonstrate the number of collisions happened in each day.
+
+```{r}
+day_counts <- table(data$CRASH.DATE)
+day_counts_df <- as.data.frame(day_counts)
+colnames(day_counts_df) <- c("Date", "Count")
+day_counts_df <- day_counts_df[order(day_counts_df$Date), ]
+
+plot(day_counts_df$Date, day_counts_df$Count, xlab = "Date",
+     ylab = "Number of Occurrences", main = "Number of Occurrences of Motor Vehicle Collisions by Day")
+```
+
+
+## Heatmap
+
+Demonstrate two drivers' collision cause types and the corresponding frequency of such accidents.
+
+```{r}
+not_empty <- data[!data$CONTRIBUTING.FACTOR.VEHICLE.1 == "" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "",]
+vehicle_counts <- table(not_empty$CONTRIBUTING.FACTOR.VEHICLE.1, not_empty$CONTRIBUTING.FACTOR.VEHICLE.2)
+vehicle_counts <- as.matrix(vehicle_counts)
+
+heatmap(vehicle_counts, cexRow = 0.4, cexCol = 0.4, Colv=NA, Rowv=NA, main = "Cause Types and Corresponding Frequency")
+```
+
+## Box Plot
+
+Demonstrate the distribution of the hour of the day when the collisions happen.
+
+```{r}
+hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
+
+boxplot(hour, horizontal = TRUE, main = "Collision Time by Hour", xlab = "Hour of the Day")
+```
