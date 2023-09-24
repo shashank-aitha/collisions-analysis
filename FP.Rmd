@@ -10,8 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
-print(nRows(data))
+getwd()
+data <- read.csv("/Users/mlai5/Documents/STAT405/Stat405FinalProject/Motor_Vehicle_Collisions_-_Crashes.csv")
+print(nrow(data))
+print(head(data, 100))
 ```
 
 ## Pie Chart
@@ -25,6 +27,10 @@ causes <- causes[!names(causes) == ""]
 par(mar = c(1, 1, 1, 1))
 pie(causes, labels = names(causes), main = "Contributing Factors", cex = 0.3)
 ```
+We observe that the most common contributing factor to vehicle collisions in
+NYC is unspecified, followed by driver inattention. This makes sense, as lack
+of driver attention is a very broad category that can be applied to a wide
+number of collisions.
 
 ## Histogram
 
@@ -44,6 +50,11 @@ barplot(bor,
 )
 
 ```
+We see that the largest number of collisions happen in Brooklyn and Queens, as
+they have the highest bars. Meanwhile, Staten Island has the least number of
+collisions. This makes sense, as Brooklyn and Queens have by far the greatest
+area by land of the NYC boroughs, while Staten Island has a significantly
+lower population than the other boroughs.
 
 ## Line Chart
 
@@ -61,6 +72,10 @@ plot(seq(length(month_counts_df$Month)), month_counts_df$Count, type = "l", xlab
      xaxt = "n")
 axis(1, at = seq(length(month_counts_df$Month)), labels = month_counts_df$Month, las = 2, cex.axis = 0.7)
 ```
+We see that the line graph fluctuates at a relatively high number of collisions 
+for the first few years, and then it sharply drops in 2020. From there, it
+fluctuates at a relatively low number of collisions for the remainder of the
+years.
 
 ## Scatter Plot
 
@@ -75,7 +90,11 @@ day_counts_df <- day_counts_df[order(day_counts_df$Date), ]
 plot(day_counts_df$Date, day_counts_df$Count, xlab = "Date",
      ylab = "Number of Occurrences", main = "Number of Occurrences of Motor Vehicle Collisions by Day")
 ```
-
+We see that the dotplot fluctuates at a relatively high number of collisions 
+for the first few years, and then it sharply drops in 2020. From there, it
+fluctuates at a relatively low number of collisions for the remainder of the
+years. Moreover, during this "low collisions" period, the day-to-day fluctuations
+fluctuate at a lower magnitude.
 
 ## Heatmap
 
@@ -88,6 +107,10 @@ vehicle_counts <- as.matrix(vehicle_counts)
 
 heatmap(vehicle_counts, cexRow = 0.4, cexCol = 0.4, Colv=NA, Rowv=NA, main = "Cause Types and Corresponding Frequency")
 ```
+We see in this heat map that the most common cause type for collisions in
+NYC is "unspecified", while there are some combinations such as traffic device
+malfunction and inappropriate markings that have relatively higher frequencies
+than other combinations.
 
 ## Box Plot
 
@@ -97,4 +120,14 @@ Demonstrate the distribution of the hour of the day when the collisions happen.
 hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
 
 boxplot(hour, horizontal = TRUE, main = "Collision Time by Hour", xlab = "Hour of the Day")
+```
+We see that the median hour of collisions for these car collisions in NYC
+is around 2 PM; the interquartile range is from about 9 AM to about 6 PM.
+This makes sense, as these are the waking hours in which people are most active.
+Moreover, since 2 PM is in the middle of this range, it makes sense that the
+median collision time would be somewhere around that time.
+
+```{r}
+
+?head
 ```
