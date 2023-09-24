@@ -1,6 +1,6 @@
 ---
-title: "FP"
-author: "Leo Li"
+title: "Collisions Analysis"
+author: "Leo Li, Shashank Aitha, Max Lai, Belinda Zhu"
 date: "2023-09-21"
 output: pdf_document
 ---
@@ -8,16 +8,15 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
+Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash.
 ```{r}
 getwd()
-data <- read.csv("/Users/mlai5/Documents/STAT405/Stat405FinalProject/Motor_Vehicle_Collisions_-_Crashes.csv")
-print(nrow(data))
+data <- read.csv("C:/Users/Shash/Downloads/Motor_Vehicle_Collisions_-_Crashes.csv")
 print(head(data, 100))
 ```
 
-## Pie Chart
 
+## Pie Chart
 Demonstrate the proportions of contributing factors to collisions.
 
 ```{r}
@@ -127,7 +126,22 @@ This makes sense, as these are the waking hours in which people are most active.
 Moreover, since 2 PM is in the middle of this range, it makes sense that the
 median collision time would be somewhere around that time.
 
+This is a logistic regression model that predicts probability of a collision in Brooklyn that is based on the hour of the day
 ```{r}
+data$isBrooklyn <- as.numeric(data$BOROUGH == "BROOKLYN")
 
-?head
+data$hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
+
+model <- glm(isBrooklyn ~ hour, family="binomial", data=data)
+new_data <- data.frame(hour = 0:23) 
+predicted_probabilities <- predict(model, newdata=new_data, type="response")
+
+results <- data.frame(
+  HOUR = 0:23,
+  Probability_Of_Collision_In_Brooklyn = predicted_probabilities
+)
+
+print(results)
+
 ```
+
