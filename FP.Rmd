@@ -21,8 +21,8 @@ Demonstrate the proportions of contributing factors to collisions.
 
 ```{r}
 causes <- table(data$CONTRIBUTING.FACTOR.VEHICLE.1)
-causes <- causes[!names(causes) == ""]
-
+causes <- causes[!names(causes) == "" & !names(causes) == "Unspecified"]
+causes <- causes[causes >= 20000]
 par(mar = c(1, 1, 1, 1))
 pie(causes, labels = names(causes), main = "Contributing Factors", cex = 0.3)
 ```
@@ -100,7 +100,10 @@ fluctuate at a lower magnitude.
 Demonstrate two drivers' collision cause types and the corresponding frequency of such accidents.
 
 ```{r}
-not_empty <- data[!data$CONTRIBUTING.FACTOR.VEHICLE.1 == "" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "",]
+not_empty <- data[!data$CONTRIBUTING.FACTOR.VEHICLE.1 == "" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "Unspecified" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "Unspecified" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "1" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "1" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "80" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "80",]
 vehicle_counts <- table(not_empty$CONTRIBUTING.FACTOR.VEHICLE.1, not_empty$CONTRIBUTING.FACTOR.VEHICLE.2)
 vehicle_counts <- as.matrix(vehicle_counts)
 
