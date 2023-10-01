@@ -11,10 +11,67 @@ knitr::opts_chunk$set(echo = TRUE)
 Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash.
 ```{r}
 getwd()
-data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
+data <- read.csv("C:/Users/Shash/Downloads/Motor_Vehicle_Collisions_-_Crashes.csv")
 print(head(data, 100))
 ```
 
+
+```{r, echo=FALSE}
+library(ggplot2)
+
+data$CRASH.DATE <- as.Date(data$CRASH.DATE, format = "%m/%d/%Y")
+data$Month <- as.Date(format(data$CRASH.DATE, "%Y-%m-01"))
+
+data <- data[!is.na(data$BOROUGH), ]
+
+data_grouped <- aggregate(list(Num_Accidents = data$CRASH.DATE), by = list(BOROUGH = data$BOROUGH, Month = data$Month), FUN = length)
+
+ggplot(data_grouped, aes(x = Month, y = Num_Accidents, color = BOROUGH)) +
+  geom_line() +
+  labs(title = "Number of Motor Vehicle Collisions by Borough Over Time",
+       x = "Date",
+       y = "Number of Collisions") +
+  theme_minimal()
+
+
+```
+
+
+
+```{r}
+library(ggplot2)
+data$Hour <- format(strptime(data$CRASH.TIME, format="%H:%M"), "%I %p")
+data$DayOfWeek <- weekdays(as.Date(data$CRASH.DATE, format = "%m/%d/%Y"))
+
+all_combinations <- expand.grid(
+  Hour = format(strptime(paste0(0:23, ":00"), format="%H:%M"), "%I %p"), 
+  DayOfWeek = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+)
+accidents_by_time <- table(data$Hour, data$DayOfWeek)
+accidents_by_time_df <- as.data.frame(as.table(accidents_by_time))
+names(accidents_by_time_df) <- c("Hour", "DayOfWeek", "Frequency")
+merged_data <- merge(all_combinations, accidents_by_time_df, all.x = TRUE)
+merged_data$Frequency[is.na(merged_data$Frequency)] <- 0  
+
+merged_data$DayOfWeek <- factor(merged_data$DayOfWeek, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+ggplot(merged_data, aes(x = DayOfWeek, y = Hour, fill = Frequency)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(
+    title = "Frequency of Accidents by Time and Day",
+    x = "Day of the Week",
+    y = "Hour of the Day",
+    fill = "Frequency"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 5)
+  )
+
+```
 
 ## Pie Chart
 Demonstrate the proportions of contributing factors to collisions.
