@@ -3,23 +3,27 @@ title: "Collisions Analysis"
 author: "Leo Li, Shashank Aitha, Max Lai, Belinda Zhu"
 date: "2023-09-21"
 output: pdf_document
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r, echo = FALSE}
+install.packages("ggplot2")
+library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash.
-```{r}
+```{r, echo = FALSE}
 getwd()
-data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
-print(head(data, 100))
+data <- read.csv("/Users/mlai5/Documents/STAT405/Stat405FinalProject/Motor_Vehicle_Collisions_-_Crashes.csv")
+
 ```
 
 
 ## Pie Chart
 Demonstrate the proportions of contributing factors to collisions.
 
-```{r}
+```{r, echo = FALSE}
 causes <- table(data$CONTRIBUTING.FACTOR.VEHICLE.1)
 causes <- causes[!names(causes) == ""]
 
@@ -35,7 +39,7 @@ number of collisions.
 
 Demonstrate the number of collisions happened on different boroughs.
 
-```{r}
+```{r, echo = FALSE}
 bor <- table(data$BOROUGH)
 bor <- bor[!names(bor) == ""]
 
@@ -59,7 +63,7 @@ lower population than the other boroughs.
 
 Demonstrate the trend of number of collisions happened in each month.
 
-```{r}
+```{r, echo = FALSE}
 data$CRASH.DATE <- as.Date(data$CRASH.DATE, format="%m/%d/%Y")
 month <- format(data$CRASH.DATE, "%Y-%m")
 month_counts <- table(month)
@@ -80,7 +84,7 @@ years.
 
 Demonstrate the number of collisions happened in each day.
 
-```{r}
+```{r, echo = FALSE}
 day_counts <- table(data$CRASH.DATE)
 day_counts_df <- as.data.frame(day_counts)
 colnames(day_counts_df) <- c("Date", "Count")
@@ -99,7 +103,7 @@ fluctuate at a lower magnitude.
 
 Demonstrate two drivers' collision cause types and the corresponding frequency of such accidents.
 
-```{r}
+```{r, echo = FALSE}
 not_empty <- data[!data$CONTRIBUTING.FACTOR.VEHICLE.1 == "" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "",]
 vehicle_counts <- table(not_empty$CONTRIBUTING.FACTOR.VEHICLE.1, not_empty$CONTRIBUTING.FACTOR.VEHICLE.2)
 vehicle_counts <- as.matrix(vehicle_counts)
@@ -115,10 +119,11 @@ than other combinations.
 
 Demonstrate the distribution of the hour of the day when the collisions happen.
 
-```{r}
+```{r, echo = FALSE}
 hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
-
-boxplot(hour, horizontal = TRUE, main = "Collision Time by Hour", xlab = "Hour of the Day")
+?sub
+boxplot(hour, horizontal = TRUE, main = "Collision Time by Hour", 
+        xlab = "Hour of the Day")
 ```
 We see that the median hour of collisions for these car collisions in NYC
 is around 2 PM; the interquartile range is from about 9 AM to about 6 PM.
@@ -127,7 +132,7 @@ Moreover, since 2 PM is in the middle of this range, it makes sense that the
 median collision time would be somewhere around that time.
 
 This is a logistic regression model that predicts probability of a collision in Brooklyn that is based on the hour of the day
-```{r}
+```{r, echo = FALSE}
 data$isBrooklyn <- as.numeric(data$BOROUGH == "BROOKLYN")
 
 data$hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
@@ -145,3 +150,47 @@ print(results)
 
 ```
 
+## Violin Plot
+
+The violin plot displays the distribution of collisions with respect to what
+hour of the day they occurred for each of the boroughs of NYC; it displays
+the distribution by not only providing the summary statistics for each of the
+boroughs of NYC but also by plotting the kernel density of the collisions
+in each plot.
+
+```{r, echo = FALSE}
+spec_data <- data[c("CRASH.TIME", "BOROUGH")]
+spec_data$CRASH.TIME <- as.integer(sub(":.*", "", data$CRASH.TIME))
+spec_data <- spec_data[spec_data$BOROUGH != "", ]
+
+ggplot(spec_data, aes(x = spec_data$BOROUGH, y = spec_data$CRASH.TIME)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.2) + labs(title = "Violin Plot of Hour of Collision based on Borough", x = "Borough", y = "Hour of Collision")
+
+
+```
+
+We can see from the violin plots that all 5 boroughs have roughly the same median
+hour of accident for their car collisions, which lies around 2 PM. This makes sense,
+as that is in the middle of typical waking hours and thus seems to be the logical "middle"
+time for accidents in general. We also see that all 5 boroughs seem to have peaks in
+collision frequency at around 5 PM; this makes sense since 5 PM is the end of the workday
+for many individuals, and the resulting high-volume rush hour traffic  isa high-risk time 
+for collisions between vehicles and other entities on or around the road.
+
+
+## Frequency Polygon
+
+The frequency polygon displays the number of casualties in NYC car collisions - which includes persons injured and persons killed - against the hour of the day that the incident occurred.
+
+```{r}
+polygon_data <- data[c("CRASH.TIME", "NUMBER.OF.PERSONS.INJURED", "NUMBER.OF.PERSONS.KILLED")]
+polygon_data["total_casualties"] <- polygon_data["NUMBER.OF.PERSONS.INJURED"] +
+  polygon_data["NUMBER.OF.PERSONS.KILLED"]
+polygon_data <- polygon_data[c("CRASH.TIME", "total_casualties")]
+polygon_data$CRASH.TIME <- as.integer(sub(":.*", "", data$CRASH.TIME))
+polygon_data <- polygon_data[!is.na(polygon_data$CRASH.TIME), ]
+polygon_data <- polygon_data[!is.na(polygon_data$total_casualties), ]
+
+ggplot(polygon_data, aes(x = CRASH.TIME)) + geom_freqpoly() + labs(title = "Freq Polygon of Casualties Based on Collision's Time", x = "Hour Collision Occurred", y = "Total Casualties")
+
+
+```
