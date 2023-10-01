@@ -8,7 +8,7 @@ editor_options:
 ---
 
 ```{r, echo = FALSE}
-install.packages("ggplot2")
+# install.packages("ggplot2")
 library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -16,7 +16,7 @@ Introduction: This data set consists of every police reported motor vehicle coll
  
 ```{r, echo = FALSE}
 getwd()
-data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
+data <- read.csv("/Users/mlai5/Documents/STAT405/Stat405FinalProject/Motor_Vehicle_Collisions_-_Crashes.csv")
 
 ```
 
