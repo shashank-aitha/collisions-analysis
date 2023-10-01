@@ -194,3 +194,5 @@ ggplot(polygon_data, aes(x = CRASH.TIME)) + geom_freqpoly() + labs(title = "Freq
 
 
 ```
+
+We see that the number of casualties in NYC car collisions peaks at around 4:30 PM to 5 PM; this makes sense since this is when most people get off of work and join the rush hour commute. The sheer volume of traffic from rush hour is a relatively large risk that lends itself to more casualties from collisions than other times of the day. Meanwhile, the times of the day that have the fewest collisions are from after 11 PM to around 5 AM. This also makes sense, as most people are asleep or at home at this time, so fewer cars are on the road and thus fewer collisions occur.
