@@ -269,3 +269,64 @@ ggplot(polygon_data, aes(x = CRASH.TIME)) + geom_freqpoly() + labs(title = "Freq
 ```
 
 We see that the number of casualties in NYC car collisions peaks at around 4:30 PM to 5 PM; this makes sense since this is when most people get off of work and join the rush hour commute. The sheer volume of traffic from rush hour is a relatively large risk that lends itself to more casualties from collisions than other times of the day. Meanwhile, the times of the day that have the fewest collisions are from after 11 PM to around 5 AM. This also makes sense, as most people are asleep or at home at this time, so fewer cars are on the road and thus fewer collisions occur.
+
+
+
+
+## Facet Grid (vertical)
+
+Demonstrate the distribution of injuries and deaths of each type of people due to the collisions.
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+selected_columns <- data %>%
+  select(NUMBER.OF.PERSONS.INJURED, NUMBER.OF.PERSONS.KILLED,
+         NUMBER.OF.PEDESTRIANS.INJURED, NUMBER.OF.PEDESTRIANS.KILLED,
+         NUMBER.OF.CYCLIST.INJURED, NUMBER.OF.CYCLIST.KILLED,
+         NUMBER.OF.MOTORIST.INJURED, NUMBER.OF.MOTORIST.KILLED)
+data_long <- gather(selected_columns, key = "Type", value = "Count")
+
+ggplot(data_long, aes(x = Count, fill = Type)) +
+  geom_histogram() +
+  facet_grid(. ~ Type) +
+  labs(x = "Count", y = "Frequency", fill = "Type", title = "Count of Injuries and Deaths") +
+  xlim(c(-0.5,6.5)) +
+  theme(axis.text.y = element_text(size = 6),
+        strip.text = element_blank())
+```
+The plot shows that most of the collisions do not result in deaths. However, at
+most 5 people are injured in one accident, and motorists are more prone to injuries.
+Majority of the accidents do not result in injuries or deaths.
+
+
+## Hexagonal Binning Plot with New York Map
+
+Illustrates the location of the accidents on the map of NY.
+
+```{r}
+library(ggplot2)
+library(maps)
+
+filtered_data <- data[data$LATITUDE != 0 & data$LONGITUDE != 0, ]
+ny_map <- map_data("county", region = "new york")
+x_limits <- range(ny_map$long)
+y_limits <- range(ny_map$lat)
+filtered_data <- subset(filtered_data, LONGITUDE >= x_limits[1] & LONGITUDE <= x_limits[2] &
+                           LATITUDE >= y_limits[1] & LATITUDE <= y_limits[2])
+
+color_palette <- scale_fill_gradient(low = "lightblue", high = "darkblue")
+
+ggplot() +
+  geom_polygon(data = ny_map, aes(x = long, y = lat, group = group), fill = "gray90") +
+  geom_hex(data = filtered_data, aes(x = LONGITUDE, y = LATITUDE, fill = ..count..), bins = 50) +
+  color_palette +
+  labs(title = "Accidents' Geographic Location") +
+  theme_void() +
+  theme(legend.position = "bottom", legend.key.width = unit(2, "cm"),
+        plot.title = element_text(hjust = 0.5))
+```
+We see that collisions are collected mainly in the west part of NYC, with the largest
+number of collisions happening in Brooklyn and Queens region as shown on the map.
