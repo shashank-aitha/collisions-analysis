@@ -12,7 +12,8 @@ install.packages("ggplot2")
 library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
-Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash.
+Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash. This will allow us to contribute to the understanding and improvement of traffic safety in New York City.
+ 
 ```{r, echo = FALSE}
 getwd()
 data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
@@ -20,7 +21,7 @@ data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
 ```
 
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 library(ggplot2)
 
 data$CRASH.DATE <- as.Date(data$CRASH.DATE, format = "%m/%d/%Y")
@@ -40,9 +41,12 @@ ggplot(data_grouped, aes(x = Month, y = Num_Accidents, color = BOROUGH)) +
 
 ```
 
+This graph shows the number of collisions in the different boroughs of New York City.The top line in red represents the total number of collisions and the remaining colored lines show the number of collisions in the different boroughs with the legend on the right.
+
+We observe that Brooklyn has consistently been the leader and staten island has always been last in number of collisions by borough. The remaining 3, Queens, Manhattan, and the Bronx are usually in this order from most collisions to least but sometimes change. 
 
 
-```{r}
+```{r, echo = FALSE}
 library(ggplot2)
 data$Hour <- format(strptime(data$CRASH.TIME, format="%H:%M"), "%I %p")
 data$DayOfWeek <- weekdays(as.Date(data$CRASH.DATE, format = "%m/%d/%Y"))
@@ -76,6 +80,11 @@ ggplot(merged_data, aes(x = DayOfWeek, y = Hour, fill = Frequency)) +
   )
 
 ```
+
+This heat map shows the frequency of accidents by time and day with days of the week on the x axis and hour of the day on the y axis. 
+
+We observe that accidents happen most commonly during weekdays. There is a big chunk of red from 8am to 6pm on weekdays which suggest that is when collisions happen most frequently. There is a relatively white chunk on weekdays from 1am to 5am which suggests that is when collisions happen less frequently.
+
 
 ## Pie Chart
 Demonstrate the proportions of contributing factors to collisions.
@@ -193,6 +202,8 @@ median collision time would be somewhere around that time.
 
 This is a logistic regression model that predicts probability of a collision in Brooklyn that is based on the hour of the day
 ```{r, echo = FALSE}
+library(knitr)
+
 data$isBrooklyn <- as.numeric(data$BOROUGH == "BROOKLYN")
 
 data$hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
@@ -206,7 +217,9 @@ results <- data.frame(
   Probability_Of_Collision_In_Brooklyn = predicted_probabilities
 )
 
-print(results)
+table <- kable(results, caption = "Predicted Probabilities of Collision in Brooklyn by Hour")
+
+print(table)
 
 ```
 
