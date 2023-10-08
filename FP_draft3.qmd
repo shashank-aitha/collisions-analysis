@@ -1,0 +1,379 @@
+---
+title: "Collisions Analysis"
+author: "Leo Li, Shashank Aitha, Max Lai, Belinda Zhu"
+date: "2023-09-21"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# install.packages("ggplot2")
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+
+Introduction: This data set consists of every police reported motor vehicle collision in New York City from 2014. It contains information on 2 million accidents. Within each reported accident we have access to the various contributing factors, vehicle types, time, location, and other details regarding the crash. Our goal is to develop a predictive model to assess the likelihood of an injury or fatality based on variables such as the type of vehicle, time of the incident, and the reason for the crash. This will allow us to contribute to the understanding and improvement of traffic safety in New York City.
+
+
+```{r, echo = FALSE}
+data <- read.csv("Motor_Vehicle_Collisions_-_Crashes.csv")
+
+```
+
+
+## Line Chart
+
+This graph shows the number of collisions in the different boroughs of New York City.The top line in red represents the total number of collisions and the remaining colored lines show the number of collisions in the different boroughs with the legend on the right.
+
+```{r, echo = FALSE}
+library(ggplot2)
+
+data$CRASH.DATE <- as.Date(data$CRASH.DATE, format = "%m/%d/%Y")
+data$Month <- as.Date(format(data$CRASH.DATE, "%Y-%m-01"))
+
+data <- data[!is.na(data$BOROUGH), ]
+
+data_grouped <- aggregate(list(Num_Accidents = data$CRASH.DATE), by = list(BOROUGH = data$BOROUGH, Month = data$Month), FUN = length)
+
+ggplot(data_grouped, aes(x = Month, y = Num_Accidents, color = BOROUGH)) +
+  geom_line() +
+  labs(title = "Number of Motor Vehicle Collisions by Borough Over Time",
+       x = "Date",
+       y = "Number of Collisions") +
+  theme_minimal()
+
+
+```
+
+
+We observe that Brooklyn has consistently been the leader and staten island has always been last in number of collisions by borough. The remaining 3, Queens, Manhattan, and the Bronx are usually in this order from most collisions to least but sometimes change. 
+
+
+
+## Heatmap
+
+This heat map shows the frequency of accidents by time and day with days of the week on the x axis and hour of the day on the y axis. 
+
+```{r, echo = FALSE}
+library(ggplot2)
+data$Hour <- format(strptime(data$CRASH.TIME, format="%H:%M"), "%I %p")
+data$DayOfWeek <- weekdays(as.Date(data$CRASH.DATE, format = "%m/%d/%Y"))
+
+all_combinations <- expand.grid(
+  Hour = format(strptime(paste0(0:23, ":00"), format="%H:%M"), "%I %p"), 
+  DayOfWeek = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+)
+accidents_by_time <- table(data$Hour, data$DayOfWeek)
+accidents_by_time_df <- as.data.frame(as.table(accidents_by_time))
+names(accidents_by_time_df) <- c("Hour", "DayOfWeek", "Frequency")
+merged_data <- merge(all_combinations, accidents_by_time_df, all.x = TRUE)
+merged_data$Frequency[is.na(merged_data$Frequency)] <- 0  
+
+merged_data$DayOfWeek <- factor(merged_data$DayOfWeek, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+ggplot(merged_data, aes(x = DayOfWeek, y = Hour, fill = Frequency)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(
+    title = "Frequency of Accidents by Time and Day",
+    x = "Day of the Week",
+    y = "Hour of the Day",
+    fill = "Frequency"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 5)
+  )
+
+```
+
+
+We observe that accidents happen most commonly during weekdays. There is a big chunk of red from 8am to 6pm on weekdays which suggest that is when collisions happen most frequently. There is a relatively white chunk on weekdays from 1am to 5am which suggests that is when collisions happen less frequently.
+
+
+
+## Pie Chart
+Demonstrate the proportions of contributing factors to collisions.
+
+```{r, echo = FALSE}
+causes <- table(data$CONTRIBUTING.FACTOR.VEHICLE.1)
+causes <- causes[!names(causes) == "" & !names(causes) == "Unspecified"]
+causes <- causes[causes >= 20000]
+par(mar = c(1, 1, 1, 1))
+pie(causes, labels = names(causes), main = "Contributing Factors", cex = 0.3)
+```
+
+
+We observe that the most common contributing factor to vehicle collisions in
+NYC is unspecified, followed by driver inattention. This makes sense, as lack
+of driver attention is a very broad category that can be applied to a wide
+number of collisions.
+
+
+
+## Histogram
+
+Demonstrate the number of collisions happened on different boroughs.
+
+```{r, echo = FALSE}
+bor <- table(data$BOROUGH)
+bor <- bor[!names(bor) == ""]
+
+barplot(bor, 
+        names.arg = names(bor),
+        cex.names = 0.8,
+        main = "ACCIDENT BOROUGH",
+        xlab = "Borough",
+        ylab = "Frequency",
+        col = "lightblue"
+)
+
+```
+
+
+We see that the largest number of collisions happen in Brooklyn and Queens, as
+they have the highest bars. Meanwhile, Staten Island has the least number of
+collisions. This makes sense, as Brooklyn and Queens have by far the greatest
+area by land of the NYC boroughs, while Staten Island has a significantly
+lower population than the other boroughs.
+
+
+
+## Line Chart
+
+Demonstrate the trend of number of collisions happened in each month.
+
+```{r, echo = FALSE}
+data$CRASH.DATE <- as.Date(data$CRASH.DATE, format="%m/%d/%Y")
+month <- format(data$CRASH.DATE, "%Y-%m")
+month_counts <- table(month)
+month_counts_df <- data.frame(Month = names(month_counts), Count = as.numeric(month_counts))
+month_counts_df <- month_counts_df[order(month_counts_df$Month), ]
+
+plot(seq(length(month_counts_df$Month)), month_counts_df$Count, type = "l", xlab = "Month",
+     ylab = "Number of Occurrences", main = "Number of Occurrences of Motor Vehicle Collisions by Month",
+     xaxt = "n")
+axis(1, at = seq(length(month_counts_df$Month)), labels = month_counts_df$Month, las = 2, cex.axis = 0.7)
+```
+
+
+We see that the line graph fluctuates at a relatively high number of collisions 
+for the first few years, and then it sharply drops in 2020. From there, it
+fluctuates at a relatively low number of collisions for the remainder of the
+years.
+
+
+
+## Scatter Plot
+
+Demonstrate the number of collisions happened in each day.
+
+```{r, echo = FALSE}
+day_counts <- table(data$CRASH.DATE)
+day_counts_df <- as.data.frame(day_counts)
+colnames(day_counts_df) <- c("Date", "Count")
+day_counts_df <- day_counts_df[order(day_counts_df$Date), ]
+
+plot(day_counts_df$Date, day_counts_df$Count, xlab = "Date",
+     ylab = "Number of Occurrences", main = "Number of Occurrences of Motor Vehicle Collisions by Day")
+```
+
+
+We see that the dotplot fluctuates at a relatively high number of collisions 
+for the first few years, and then it sharply drops in 2020. From there, it
+fluctuates at a relatively low number of collisions for the remainder of the
+years. Moreover, during this "low collisions" period, the day-to-day fluctuations
+fluctuate at a lower magnitude.
+
+
+
+## Heatmap
+
+Demonstrate two drivers' collision cause types and the corresponding frequency of such accidents.
+
+```{r, echo = FALSE}
+not_empty <- data[!data$CONTRIBUTING.FACTOR.VEHICLE.1 == "" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "Unspecified" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "Unspecified" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "1" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "1" &
+                    !data$CONTRIBUTING.FACTOR.VEHICLE.1 == "80" & !data$CONTRIBUTING.FACTOR.VEHICLE.2 == "80",]
+vehicle_counts <- table(not_empty$CONTRIBUTING.FACTOR.VEHICLE.1, not_empty$CONTRIBUTING.FACTOR.VEHICLE.2)
+vehicle_counts <- as.matrix(vehicle_counts)
+
+heatmap(vehicle_counts, cexRow = 0.4, cexCol = 0.4, Colv=NA, Rowv=NA, main = "Cause Types and Corresponding Frequency")
+
+```
+
+
+We see in this heat map that the most common cause type for collisions in
+NYC is "unspecified", while there are some combinations such as traffic device
+malfunction and inappropriate markings that have relatively higher frequencies
+than other combinations.
+
+
+
+## Box Plot
+
+Demonstrate the distribution of the hour of the day when the collisions happen.
+
+```{r, echo = FALSE}
+hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
+?sub
+boxplot(hour, horizontal = TRUE, main = "Collision Time by Hour", 
+        xlab = "Hour of the Day")
+```
+
+
+We see that the median hour of collisions for these car collisions in NYC
+is around 2 PM; the interquartile range is from about 9 AM to about 6 PM.
+This makes sense, as these are the waking hours in which people are most active.
+Moreover, since 2 PM is in the middle of this range, it makes sense that the
+median collision time would be somewhere around that time.
+
+
+
+## Violin Plot
+
+The violin plot displays the distribution of collisions with respect to what
+hour of the day they occurred for each of the boroughs of NYC; it displays
+the distribution by not only providing the summary statistics for each of the
+boroughs of NYC but also by plotting the kernel density of the collisions
+in each plot.
+
+```{r, echo = FALSE}
+spec_data <- data[c("CRASH.TIME", "BOROUGH")]
+spec_data$CRASH.TIME <- as.integer(sub(":.*", "", data$CRASH.TIME))
+spec_data <- spec_data[spec_data$BOROUGH != "", ]
+
+ggplot(spec_data, aes(x = spec_data$BOROUGH, y = spec_data$CRASH.TIME)) + geom_violin(trim = FALSE) + geom_boxplot(width = 0.2) + labs(title = "Violin Plot of Hour of Collision based on Borough", x = "Borough", y = "Hour of Collision")
+
+
+```
+
+
+We can see from the violin plots that all 5 boroughs have roughly the same median
+hour of accident for their car collisions, which lies around 2 PM. This makes sense,
+as that is in the middle of typical waking hours and thus seems to be the logical "middle"
+time for accidents in general. We also see that all 5 boroughs seem to have peaks in
+collision frequency at around 5 PM; this makes sense since 5 PM is the end of the workday
+for many individuals, and the resulting high-volume rush hour traffic  isa high-risk time 
+for collisions between vehicles and other entities on or around the road.
+
+
+
+## Frequency Polygon
+
+The frequency polygon displays the number of casualties in NYC car collisions - which includes persons injured and persons killed - against the hour of the day that the incident occurred.
+
+```{r, echo = FALSE}
+polygon_data <- data[c("CRASH.TIME", "NUMBER.OF.PERSONS.INJURED", "NUMBER.OF.PERSONS.KILLED")]
+polygon_data["total_casualties"] <- polygon_data["NUMBER.OF.PERSONS.INJURED"] +
+  polygon_data["NUMBER.OF.PERSONS.KILLED"]
+polygon_data <- polygon_data[c("CRASH.TIME", "total_casualties")]
+polygon_data$CRASH.TIME <- as.integer(sub(":.*", "", data$CRASH.TIME))
+polygon_data <- polygon_data[!is.na(polygon_data$CRASH.TIME), ]
+polygon_data <- polygon_data[!is.na(polygon_data$total_casualties), ]
+
+ggplot(polygon_data, aes(x = CRASH.TIME)) + geom_freqpoly() + labs(title = "Freq Polygon of Casualties Based on Collision's Time", x = "Hour Collision Occurred", y = "Total Casualties")
+
+
+```
+
+
+We see that the number of casualties in NYC car collisions peaks at around 4:30 PM to 5 PM; this makes sense since this is when most people get off of work and join the rush hour commute. The sheer volume of traffic from rush hour is a relatively large risk that lends itself to more casualties from collisions than other times of the day. Meanwhile, the times of the day that have the fewest collisions are from after 11 PM to around 5 AM. This also makes sense, as most people are asleep or at home at this time, so fewer cars are on the road and thus fewer collisions occur.
+
+
+
+## Facet Grid (vertical)
+
+Demonstrate the distribution of injuries and deaths of each type of people due to the collisions.
+
+```{r, echo = FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+selected_columns <- data %>%
+  select(NUMBER.OF.PERSONS.INJURED, NUMBER.OF.PERSONS.KILLED,
+         NUMBER.OF.PEDESTRIANS.INJURED, NUMBER.OF.PEDESTRIANS.KILLED,
+         NUMBER.OF.CYCLIST.INJURED, NUMBER.OF.CYCLIST.KILLED,
+         NUMBER.OF.MOTORIST.INJURED, NUMBER.OF.MOTORIST.KILLED)
+data_long <- gather(selected_columns, key = "Type", value = "Count")
+
+ggplot(data_long, aes(x = Count, fill = Type)) +
+  geom_histogram() +
+  facet_grid(. ~ Type) +
+  labs(x = "Count", y = "Frequency", fill = "Type", title = "Count of Injuries and Deaths") +
+  xlim(c(-0.5,6.5)) +
+  theme(axis.text.y = element_text(size = 6),
+        strip.text = element_blank())
+```
+
+
+The plot shows that most of the collisions do not result in deaths. However, at
+most 5 people are injured in one accident, and motorists are more prone to injuries.
+Majority of the accidents do not result in injuries or deaths.
+
+
+
+## Hexagonal Binning Plot with New York Map
+
+Illustrates the location of the accidents on the map of NY.
+
+```{r, echo = FALSE}
+library(ggplot2)
+library(maps)
+
+filtered_data <- data[data$LATITUDE != 0 & data$LONGITUDE != 0, ]
+ny_map <- map_data("county", region = "new york")
+x_limits <- range(ny_map$long)
+y_limits <- range(ny_map$lat)
+filtered_data <- subset(filtered_data, LONGITUDE >= x_limits[1] & LONGITUDE <= x_limits[2] &
+                           LATITUDE >= y_limits[1] & LATITUDE <= y_limits[2])
+
+color_palette <- scale_fill_gradient(low = "lightblue", high = "darkblue")
+
+ggplot() +
+  geom_polygon(data = ny_map, aes(x = long, y = lat, group = group), fill = "gray90") +
+  geom_hex(data = filtered_data, aes(x = LONGITUDE, y = LATITUDE, fill = ..count..), bins = 50) +
+  color_palette +
+  labs(title = "Accidents' Geographic Location") +
+  theme_void() +
+  theme(legend.position = "bottom", legend.key.width = unit(2, "cm"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+
+We see that collisions are collected mainly in the west part of NYC, with the largest
+number of collisions happening in Brooklyn and Queens region as shown on the map.
+
+
+
+## Logistic Regression
+
+This is a logistic regression model that predicts probability of a collision in Brooklyn that is based on the hour of the day.
+
+```{r, echo = FALSE}
+library(knitr)
+
+data$isBrooklyn <- as.numeric(data$BOROUGH == "BROOKLYN")
+
+data$hour <- as.integer(sub(":.*", "", data$CRASH.TIME))
+
+model <- glm(isBrooklyn ~ hour, family="binomial", data=data)
+new_data <- data.frame(hour = 0:23) 
+predicted_probabilities <- predict(model, newdata=new_data, type="response")
+
+results <- data.frame(
+  HOUR = 0:23,
+  Probability_Of_Collision_In_Brooklyn = predicted_probabilities
+)
+
+table <- kable(results, caption = "Predicted Probabilities of Collision in Brooklyn by Hour")
+
+print(table)
+
+```
